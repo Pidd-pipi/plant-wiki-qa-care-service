@@ -47,7 +47,7 @@ func (s *PlantSpeciesService) Create(p *model.PlantSpecies) (*model.PlantSpecies
 func (s *PlantSpeciesService) Get(id uint) (*model.PlantSpecies, error) {
 	p, err := s.repo.FindByID(id)
 	if err != nil {
-		if err == repository.ErrNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, util.NewAppError(404, constants.CodeNotFound,
 				fmt.Sprintf("PlantSpecies[id=%d] not found", id))
 		}
@@ -60,6 +60,10 @@ func (s *PlantSpeciesService) Get(id uint) (*model.PlantSpecies, error) {
 func (s *PlantSpeciesService) Update(id uint, p *model.PlantSpecies) (*model.PlantSpecies, error) {
 	exist, err := s.repo.FindByID(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound,
+				fmt.Sprintf("PlantSpecies[id=%d] not found", id))
+		}
 		return nil, fmt.Errorf("plant species update find: %w", err)
 	}
 	if p.Type != "" && !constants.IsValidPlantType(p.Type) {
@@ -109,6 +113,10 @@ func (s *PlantSpeciesService) Update(id uint, p *model.PlantSpecies) (*model.Pla
 // Delete removes a plant species (admin only).
 func (s *PlantSpeciesService) Delete(id uint) error {
 	if err := s.repo.Delete(id); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return util.NewAppError(404, constants.CodeNotFound,
+				fmt.Sprintf("PlantSpecies[id=%d] not found", id))
+		}
 		return fmt.Errorf("plant species delete: %w", err)
 	}
 	s.logger.Info(fmt.Sprintf(constants.LogPlantDeleteSuccess, id), "id", id)
