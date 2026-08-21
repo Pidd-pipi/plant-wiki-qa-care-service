@@ -31,6 +31,10 @@ func (s *CareReminderService) Create(userID uint, m *model.CareReminder) (*model
 	if m.Status == "" {
 		m.Status = model.ReminderPending
 	}
+	if m.Status == model.ReminderSnoozed {
+		return nil, util.NewAppError(422, constants.CodeValidationError,
+			fmt.Sprintf("CareReminder[task_title=%s] create failed: snoozed not allowed on create", m.TaskTitle))
+	}
 	if m.RemindDate.IsZero() {
 		return nil, util.NewAppError(422, constants.CodeValidationError,
 			fmt.Sprintf("CareReminder[task_title=%s] create failed: remind_date required", m.TaskTitle))
@@ -80,6 +84,8 @@ func (s *CareReminderService) UpdateStatus(userID, id uint, status string) (*mod
 	switch status {
 	case model.ReminderDone:
 		m.Status = model.ReminderDone
+	case model.ReminderSnoozed:
+		m.Status = model.ReminderPending
 	case model.ReminderPending:
 		if m.RemindDate.Before(time.Now()) {
 			m.Status = model.ReminderOverdue

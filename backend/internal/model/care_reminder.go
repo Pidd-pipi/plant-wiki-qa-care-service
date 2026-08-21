@@ -7,6 +7,7 @@ const (
 	ReminderPending = "pending"
 	ReminderDone    = "done"
 	ReminderOverdue = "overdue"
+	ReminderSnoozed = "snooze"
 )
 
 // CareReminder is a scheduled gardening task owned by a user.
