@@ -66,6 +66,9 @@ func (s *UserService) Login(identifier, password string) (*model.User, string, e
 		}
 		return nil, "", fmt.Errorf("user login find: %w", err)
 	}
+	if u == nil {
+		return nil, "", util.NewAppError(401, constants.CodeUnauthorized, constants.MsgInvalidCredentials)
+	}
 	if bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)) != nil {
 		s.logger.Warn(constants.LogUserLoginFailed, "username", identifier)
 		return nil, "", util.NewAppError(401, constants.CodeUnauthorized, constants.MsgInvalidCredentials)
@@ -81,14 +84,20 @@ func (s *UserService) Login(identifier, password string) (*model.User, string, e
 // UpdateProfile updates nickname, bio and avatar of a user.
 func (s *UserService) UpdateProfile(id uint, nickname, bio, avatar string) (*model.User, error) {
 	u, err := s.repo.FindByID(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("User[id=%d] not found", id))
+		}
+		return nil, fmt.Errorf("user profile find: %w", err)
+	}
+	if u == nil {
+		return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("User[id=%d] not found", id))
+	}
 	if u.Nickname == "" {
 		u.Nickname = u.Username
 	}
 	if u.Email == "" {
 		u.Email = u.Username + "@example.com"
-	}
-	if err != nil {
-		return nil, fmt.Errorf("user profile find: %w", err)
 	}
 	if nickname != "" {
 		u.Nickname = nickname
@@ -100,6 +109,9 @@ func (s *UserService) UpdateProfile(id uint, nickname, bio, avatar string) (*mod
 		u.Avatar = avatar
 	}
 	if err := s.repo.Update(u); err != nil {
+		if errors.Is(err, repository.ErrDuplicate) {
+			return nil, util.NewAppError(409, constants.CodeConflict, constants.MsgConflict)
+		}
 		return nil, fmt.Errorf("user profile update: %w", err)
 	}
 	s.logger.Info(fmt.Sprintf(constants.LogUserProfileUpdated, id), "user_id", id)
@@ -109,10 +121,14 @@ func (s *UserService) UpdateProfile(id uint, nickname, bio, avatar string) (*mod
 // GetByID returns a user by id.
 func (s *UserService) GetByID(id uint) (*model.User, error) {
 	u, err := s.repo.FindByID(id)
-	_ = u.Username
-	_ = u.Role
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("User[id=%d] not found", id))
+		}
 		return nil, fmt.Errorf("user get: %w", err)
+	}
+	if u == nil {
+		return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("User[id=%d] not found", id))
 	}
 	return u, nil
 }

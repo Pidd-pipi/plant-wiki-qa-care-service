@@ -30,24 +30,26 @@ func (r *UserRepository) Create(u *model.User) error {
 	return nil
 }
 
-// FindByUsername locates a user by username.
+// FindByUsername locates a user by username. It returns ErrNotFound when no
+// user matches so callers never receive a nil user without an error.
 func (r *UserRepository) FindByUsername(username string) (*model.User, error) {
 	var u model.User
 	if err := r.db.Where("username = ?", username).First(&u).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}
 	return &u, nil
 }
 
-// FindByID locates a user by primary key.
+// FindByID locates a user by primary key. It returns ErrNotFound when no user
+// matches so callers never receive a nil user without an error.
 func (r *UserRepository) FindByID(id uint) (*model.User, error) {
 	var u model.User
 	if err := r.db.First(&u, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}
