@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 
@@ -35,7 +36,7 @@ func (r *FavoriteRepository) Find(userID uint, targetType string, targetID uint)
 	if err := r.db.Where("user_id = ? AND target_type = ? AND target_id = ?", userID, targetType, targetID).
 		First(&f).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrNotFound
+			return nil, fmt.Errorf("favorite find: %v", ErrNotFound)
 		}
 		return nil, err
 	}
