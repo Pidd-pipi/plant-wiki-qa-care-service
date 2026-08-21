@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 
 	"gorm.io/gorm"
 
@@ -29,7 +28,7 @@ func (r *AnswerRepository) FindByID(id uint) (*model.Answer, error) {
 	var a model.Answer
 	if err := r.db.First(&a, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("answer find: %v", ErrNotFound)
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}

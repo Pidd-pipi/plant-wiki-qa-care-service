@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -28,6 +29,10 @@ func NewAnswerService(db *gorm.DB, repo *repository.AnswerRepository, questionRe
 // Create adds a reply to a question.
 func (s *AnswerService) Create(userID, questionID uint, content string) (*model.Answer, error) {
 	if _, err := s.questionRepo.FindByID(questionID); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound,
+				fmt.Sprintf("Question[id=%d] not found", questionID))
+		}
 		return nil, fmt.Errorf("answer create question find: %w", err)
 	}
 	a := &model.Answer{QuestionID: questionID, UserID: userID, Content: content}
@@ -51,6 +56,10 @@ func (s *AnswerService) ListByQuestion(questionID uint) ([]model.Answer, error) 
 func (s *AnswerService) Adopt(userID, questionID, answerID uint) (*model.Answer, error) {
 	q, err := s.questionRepo.FindByID(questionID)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound,
+				fmt.Sprintf("Question[id=%d] not found", questionID))
+		}
 		return nil, fmt.Errorf("answer adopt question find: %w", err)
 	}
 	if q.UserID != userID {
@@ -59,6 +68,10 @@ func (s *AnswerService) Adopt(userID, questionID, answerID uint) (*model.Answer,
 	}
 	a, err := s.repo.FindByID(answerID)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound,
+				fmt.Sprintf("Answer[id=%d] not found", answerID))
+		}
 		return nil, fmt.Errorf("answer adopt find: %w", err)
 	}
 	if a.QuestionID != questionID {
@@ -88,13 +101,18 @@ func (s *AnswerService) Adopt(userID, questionID, answerID uint) (*model.Answer,
 
 // Like increments the like count of a reply.
 func (s *AnswerService) Like(answerID uint) (*model.Answer, error) {
+	a, err := s.repo.FindByID(answerID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound,
+				fmt.Sprintf("Answer[id=%d] not found", answerID))
+		}
+		return nil, fmt.Errorf("answer like find: %w", err)
+	}
 	if err := s.repo.IncrementLike(answerID); err != nil {
 		return nil, fmt.Errorf("answer like: %w", err)
 	}
+	a.LikeCount++
 	s.logger.Info(fmt.Sprintf(constants.LogAnswerLikeSuccess, answerID), "id", answerID)
-	a, err := s.repo.FindByID(answerID)
-	if err != nil {
-		return nil, fmt.Errorf("answer like: %w", err)
-	}
 	return a, nil
 }
