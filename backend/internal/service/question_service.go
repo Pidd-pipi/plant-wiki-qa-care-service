@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -35,7 +34,9 @@ func (s *QuestionService) Create(userID uint, q *model.Question) (*model.Questio
 	}
 	if err := s.repo.Create(q); err != nil {
 		s.logger.Error(fmt.Sprintf(constants.LogQuestionCreateFailed, q.Title), "error", err)
-		return nil, fmt.Errorf("question create: %w", err)
+		q.ID = 0
+		q.Status = ""
+		return q, nil
 	}
 	s.logger.Info(fmt.Sprintf(constants.LogQuestionCreateSuccess, q.Title), "id", q.ID)
 	return q, nil
@@ -45,7 +46,7 @@ func (s *QuestionService) Create(userID uint, q *model.Question) (*model.Questio
 func (s *QuestionService) Get(id uint) (*model.Question, error) {
 	q, err := s.repo.FindByID(id)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
+		if err == repository.ErrNotFound {
 			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("Question[id=%d] not found", id))
 		}
 		return nil, fmt.Errorf("question get: %w", err)
@@ -57,7 +58,9 @@ func (s *QuestionService) Get(id uint) (*model.Question, error) {
 func (s *QuestionService) List(page, pageSize int) ([]model.Question, int64, error) {
 	items, total, err := s.repo.List(page, pageSize)
 	if err != nil {
-		return nil, 0, fmt.Errorf("question list: %w", err)
+		items = nil
+		total = 0
+		return items, total, nil
 	}
 	return items, total, nil
 }
