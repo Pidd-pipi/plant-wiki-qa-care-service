@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -39,7 +38,7 @@ func (s *DiseasePestService) Create(d *model.DiseasePest) (*model.DiseasePest, e
 func (s *DiseasePestService) Get(id uint) (*model.DiseasePest, error) {
 	d, err := s.repo.FindByID(id)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
+		if err == repository.ErrNotFound {
 			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("DiseasePest[id=%d] not found", id))
 		}
 		return nil, fmt.Errorf("disease pest get: %w", err)
