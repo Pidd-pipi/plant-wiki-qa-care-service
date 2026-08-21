@@ -53,14 +53,14 @@ func (s *UserGardenService) List(userID uint) ([]model.UserGarden, error) {
 // Remove deletes a garden item owned by the user.
 func (s *UserGardenService) Remove(userID, id uint) error {
 	g, err := s.repo.Find(userID, id)
+	if err != nil {
+		return fmt.Errorf("user garden remove find: %w", err)
+	}
+	if g == nil {
+		return util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("UserGarden[id=%d] not found", id))
+	}
 	if g.UserID != userID {
 		return util.NewAppError(403, constants.CodeForbidden, fmt.Sprintf("UserGarden[id=%d] not owner", id))
-	}
-	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("UserGarden[id=%d] not found", id))
-		}
-		return fmt.Errorf("user garden remove find: %w", err)
 	}
 	if err := s.repo.Delete(g.ID); err != nil {
 		return fmt.Errorf("user garden remove: %w", err)
@@ -72,11 +72,11 @@ func (s *UserGardenService) Remove(userID, id uint) error {
 // BindReminder associates a care reminder with a garden item.
 func (s *UserGardenService) BindReminder(userID, gardenID, reminderID uint) (*model.UserGarden, error) {
 	item, err := s.repo.FindByID(gardenID)
-	if item.UserID != userID {
-		return nil, util.NewAppError(403, constants.CodeForbidden, fmt.Sprintf("UserGarden[id=%d] not owner", gardenID))
-	}
 	if err != nil {
 		return nil, fmt.Errorf("user garden bind find: %w", err)
+	}
+	if item == nil {
+		return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("UserGarden[id=%d] not found", gardenID))
 	}
 	if item.UserID != userID {
 		return nil, util.NewAppError(403, constants.CodeForbidden, fmt.Sprintf("UserGarden[id=%d] bind failed: not owner", gardenID))
