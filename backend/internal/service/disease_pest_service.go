@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -38,7 +39,7 @@ func (s *DiseasePestService) Create(d *model.DiseasePest) (*model.DiseasePest, e
 func (s *DiseasePestService) Get(id uint) (*model.DiseasePest, error) {
 	d, err := s.repo.FindByID(id)
 	if err != nil {
-		if err == repository.ErrNotFound {
+		if errors.Is(err, repository.ErrNotFound) {
 			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("DiseasePest[id=%d] not found", id))
 		}
 		return nil, fmt.Errorf("disease pest get: %w", err)
@@ -50,6 +51,9 @@ func (s *DiseasePestService) Get(id uint) (*model.DiseasePest, error) {
 func (s *DiseasePestService) Update(id uint, d *model.DiseasePest) (*model.DiseasePest, error) {
 	exist, err := s.repo.FindByID(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("DiseasePest[id=%d] not found", id))
+		}
 		return nil, fmt.Errorf("disease pest update find: %w", err)
 	}
 	if d.Name != "" {
@@ -80,6 +84,9 @@ func (s *DiseasePestService) Update(id uint, d *model.DiseasePest) (*model.Disea
 // Delete removes an entry (admin only).
 func (s *DiseasePestService) Delete(id uint) error {
 	if err := s.repo.Delete(id); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("DiseasePest[id=%d] not found", id))
+		}
 		return fmt.Errorf("disease pest delete: %w", err)
 	}
 	return nil
