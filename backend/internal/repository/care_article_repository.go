@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 
@@ -29,7 +30,7 @@ func (r *CareArticleRepository) FindByID(id uint) (*model.CareArticle, error) {
 	var a model.CareArticle
 	if err := r.db.First(&a, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrNotFound
+			return nil, fmt.Errorf("care article find: %v", ErrNotFound)
 		}
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (r *CareArticleRepository) Delete(id uint) error {
 		return res.Error
 	}
 	if res.RowsAffected == 0 {
-		return ErrNotFound
+		return fmt.Errorf("care article delete: %v", ErrNotFound)
 	}
 	return nil
 }

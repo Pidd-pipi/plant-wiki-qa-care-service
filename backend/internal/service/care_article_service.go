@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -44,7 +43,7 @@ func (s *CareArticleService) Create(userID uint, a *model.CareArticle) (*model.C
 func (s *CareArticleService) Get(id uint) (*model.CareArticle, error) {
 	a, err := s.repo.FindByID(id)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
+		if err == repository.ErrNotFound {
 			return nil, util.NewAppError(404, constants.CodeNotFound, fmt.Sprintf("CareArticle[id=%d] not found", id))
 		}
 		return nil, fmt.Errorf("care article get: %w", err)
