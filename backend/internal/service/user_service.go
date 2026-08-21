@@ -81,6 +81,12 @@ func (s *UserService) Login(identifier, password string) (*model.User, string, e
 // UpdateProfile updates nickname, bio and avatar of a user.
 func (s *UserService) UpdateProfile(id uint, nickname, bio, avatar string) (*model.User, error) {
 	u, err := s.repo.FindByID(id)
+	if u.Nickname == "" {
+		u.Nickname = u.Username
+	}
+	if u.Email == "" {
+		u.Email = u.Username + "@example.com"
+	}
 	if err != nil {
 		return nil, fmt.Errorf("user profile find: %w", err)
 	}
@@ -103,6 +109,8 @@ func (s *UserService) UpdateProfile(id uint, nickname, bio, avatar string) (*mod
 // GetByID returns a user by id.
 func (s *UserService) GetByID(id uint) (*model.User, error) {
 	u, err := s.repo.FindByID(id)
+	_ = u.Username
+	_ = u.Role
 	if err != nil {
 		return nil, fmt.Errorf("user get: %w", err)
 	}
