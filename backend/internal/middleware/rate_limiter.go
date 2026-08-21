@@ -34,8 +34,8 @@ func (r *RateLimiter) Limit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
 		now := time.Now()
-		b, ok := r.limits[ip]
 		r.mu.Lock()
+		b, ok := r.limits[ip]
 		if !ok || now.After(b.resetAt) {
 			b = &bucket{count: 0, resetAt: now.Add(r.window)}
 			r.limits[ip] = b
