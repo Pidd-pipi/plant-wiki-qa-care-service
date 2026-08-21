@@ -34,7 +34,7 @@ func (r *UserGardenRepository) Find(userID, plantID uint) (*model.UserGarden, er
 	var g model.UserGarden
 	if err := r.db.Where("user_id = ? AND plant_species_id = ?", userID, plantID).First(&g).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrNotFound
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (r *UserGardenRepository) FindByID(id uint) (*model.UserGarden, error) {
 	var g model.UserGarden
 	if err := r.db.First(&g, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrNotFound
+			return nil, nil
 		}
 		return nil, err
 	}
