@@ -1,0 +1,9 @@
+{
+  "mode": "service",
+  "start": "go run ./cmd/server",
+  "workdir": "backend",
+  "env": {"DB_DRIVER": "sqlite", "DB_NAME": "file::memory:?cache=shared", "SERVER_PORT": "18080", "UPLOAD_DIR": "/tmp/gbplantwiki-uploads"},
+  "ready_url": "http://127.0.0.1:18080/healthz",
+  "ready_status": [200],
+  "startup_timeout": 25
+}
